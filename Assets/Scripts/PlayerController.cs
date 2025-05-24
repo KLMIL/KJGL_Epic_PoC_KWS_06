@@ -14,6 +14,8 @@ public class PlayerController : MonoBehaviour
     bool _isMoving = false;
     float _moveThreshold = 0.1f;
 
+    bool _isQTEButtonShow = false;
+
     
     [SerializeField] List<GameObject> _nearZombies = new List<GameObject>(); // QTE 사거리 내 좀비
     [SerializeField] List<GameObject> _stunnedZombies = new List<GameObject>(); // 무력화 좀비
@@ -82,18 +84,32 @@ public class PlayerController : MonoBehaviour
         // QTE 트리거 : 근처 stun 좀비가 있고, QTE 비활성화 상태
         if (_stunnedZombies.Count > 0 && !_qteSystem.IsQTEActive())
         {
-            GameObject closestZombie = null;
-            float minDistance = float.MaxValue;
-            foreach (var zombie in _stunnedZombies)
+            // 임시 QTE 키 노출 함수. 추후 구조조정바람
+            //if (!_isQTEButtonShow)
+            //{
+            //    _qteSystem.ShowQTEStartText();
+            //}
+
+            if (Input.GetKeyDown(KeyCode.E)) 
             {
-                float distance = Vector3.Distance(transform.position, zombie.transform.position);
-                if (distance < minDistance)
+                GameObject closestZombie = null;
+                float minDistance = float.MaxValue;
+                foreach (var zombie in _stunnedZombies)
                 {
-                    minDistance = distance;
-                    closestZombie = zombie;
+                    float distance = Vector3.Distance(transform.position, zombie.transform.position);
+                    if (distance < minDistance)
+                    {
+                        minDistance = distance;
+                        closestZombie = zombie;
+                    }
                 }
+                _qteSystem.StartQTE(closestZombie);
             }
-            _qteSystem.StartQTE(closestZombie);
+        }
+        else
+        {
+            // 임시 QTE 키 노출 제거 함수. 추후 구조조정바람
+            //_qteSystem.NoShowQTEStartText();
         }
     }
 
