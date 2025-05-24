@@ -20,11 +20,13 @@ public class Bullet : MonoBehaviour
             Destroy(gameObject);
         }
     }
-
-    private void OnCollisionEnter2D(Collision2D collision)
+    private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.gameObject.CompareTag("Zombie"))
         {
+            // 이미 stun 상태인 좀비는 지나침
+            if (collision.GetComponent<Zombie>().IsStunned()) return;
+
             Destroy(gameObject);
             collision.gameObject.GetComponent<Zombie>().TakeDamage();
         }

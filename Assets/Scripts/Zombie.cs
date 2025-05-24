@@ -5,6 +5,8 @@ using static UnityEditor.Experimental.GraphView.GraphView;
 
 public class Zombie : MonoBehaviour
 {
+    public GameObject DieParticlePrefab;
+
     Transform _playerTransform;
     float _moveSpeed = 1f;
     bool _isStunned = false;
@@ -57,6 +59,8 @@ public class Zombie : MonoBehaviour
     // QTE 성공했을 때 호출할 함수
     public void Die()
     {
+        var particle = Instantiate(DieParticlePrefab, transform.position, Quaternion.identity);
+        Destroy(particle, 0.2f);
         Destroy(gameObject);
     }
 }

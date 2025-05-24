@@ -17,7 +17,7 @@ public class QTESystem : MonoBehaviour
 
     // 내부 QTE 진행상태용 변수
     bool _isQTEActive = false;
-    float _qteTimer;
+    //float _qteTimer; // 당장엔 QTE 삭제
     GameObject _targetZombie;
 
     // Getter 함수
@@ -38,11 +38,11 @@ public class QTESystem : MonoBehaviour
     {
         if (!_isQTEActive) return;
 
-        _qteTimer -= Time.deltaTime;
-        if (_qteTimer <= 0)
-        {
-            EndQTE(false);
-        }
+        //_qteTimer -= Time.deltaTime;
+        //if (_qteTimer <= 0)
+        //{
+        //    EndQTE(false);
+        //}
 
         if (Input.anyKeyDown)
         {
@@ -69,7 +69,7 @@ public class QTESystem : MonoBehaviour
 
         _targetZombie = targetZombie;
         _isQTEActive = true;
-        _qteTimer = QTETime;
+        //_qteTimer = QTETime;
         UpdateQTEText();
         QTEUI.SetActive(true);
     }
