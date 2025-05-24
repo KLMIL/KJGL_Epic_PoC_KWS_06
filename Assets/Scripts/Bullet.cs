@@ -21,12 +21,12 @@ public class Bullet : MonoBehaviour
         }
     }
 
-    // 좀비 쪽에서 파괴시키는중
-    //private void OnCollisionEnter2D(Collision2D collision)
-    //{
-    //    if (collision.gameObject.CompareTag("Zombie"))
-    //    {
-    //        Destroy(gameObject); // 좀비 맞추면 총알 파괴
-    //    }
-    //}
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Zombie"))
+        {
+            Destroy(gameObject);
+            collision.gameObject.GetComponent<Zombie>().TakeDamage();
+        }
+    }
 }

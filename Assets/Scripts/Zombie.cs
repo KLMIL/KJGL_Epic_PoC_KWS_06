@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEditor;
+using UnityEngine;
+using static UnityEditor.Experimental.GraphView.GraphView;
 
 public class Zombie : MonoBehaviour
 {
@@ -7,6 +10,10 @@ public class Zombie : MonoBehaviour
     bool _isStunned = false;
     float _stunDuration = 3f;
     float _stunTimer = 0f;
+
+
+    public bool IsStunned() => _isStunned;
+    public event Action<GameObject, bool> OnStunned; // 무력화 이벤트
 
     SpriteRenderer _spriteRenderer;
 
@@ -18,6 +25,7 @@ public class Zombie : MonoBehaviour
 
     private void Update()
     {
+        // 총에 맞은 상태라면 일정 시간동안 멈춤
         if (_isStunned)
         {
             _stunTimer -= Time.deltaTime;
@@ -26,6 +34,7 @@ public class Zombie : MonoBehaviour
                 _isStunned = false;
                 _moveSpeed = 1f;
                 _spriteRenderer.color = Color.red;
+                OnStunned?.Invoke(gameObject, false); // 무력화 해제
             }
             return;
         }
@@ -33,40 +42,21 @@ public class Zombie : MonoBehaviour
         // 플레이어 쪽으로 느리게 이동
         Vector3 direction = (_playerTransform.position - transform.position).normalized;
         transform.position += direction * _moveSpeed * Time.deltaTime;
-
-        //// 플레이어와 거리 체크
-        //float distanceToPlayer = Vector2.Distance(transform.position, _playerTransform.position);
-        //if (distanceToPlayer <= _qteTriggerDistance)
-        //{
-        //    QTESystem qteSystem = FindFirstObjectByType<QTESystem>();
-        //    if (qteSystem != null && !qteSystem.IsQTEActive())
-        //    {
-        //        qteSystem.StartQTEForStage(qteSystem.GetCurrentStage());
-        //    }
-        //}
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
+    // 총알에 맞을 때 호출되는 함수
+    public void TakeDamage()
     {
-        if (collision.gameObject.CompareTag("Bullet"))
-        {
-            _isStunned = true;
-            _stunTimer = _stunDuration;
-            _moveSpeed = 0f;
-            _spriteRenderer.color = Color.gray;
-            Destroy(collision.gameObject);
-        }
+        _isStunned = true;
+        _stunTimer = _stunDuration;
+        _moveSpeed = 0f;
+        _spriteRenderer.color = Color.gray;
+        OnStunned?.Invoke(gameObject, true); // 무력화 활성화
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    // QTE 성공했을 때 호출할 함수
+    public void Die()
     {
-        if (collision.CompareTag("Player"))
-        {
-            QTESystem qteSystem = FindFirstObjectByType<QTESystem>();
-            if (qteSystem != null && !qteSystem.IsQTEActive())
-            {
-                qteSystem.StartQTEForStage(qteSystem.GetCurrentStage());
-            }
-        }
+        Destroy(gameObject);
     }
 }

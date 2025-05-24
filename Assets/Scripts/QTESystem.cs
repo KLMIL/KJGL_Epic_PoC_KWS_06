@@ -1,149 +1,96 @@
 ﻿using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class QTESystem : MonoBehaviour
 {
-    public GameObject _player;
+    public static QTESystem Instance { get; private set; }
 
+    [Header("QTE UI")]
     public GameObject QTEUI;
     public Text QTEText;
-    public float QTETime = 2f;
-    public float SpaceQTETime = 0.2f;
 
+    [Header("QTE Status")]
+    public float QTETime = 2f;
+    public string _requiredKey = "q";
+
+    // 내부 QTE 진행상태용 변수
     bool _isQTEActive = false;
     float _qteTimer;
-    List<string> _requiredKeys = new List<string>();
-    int _currentKeyIndex = 0;
-    bool _isSpacebarQTE = false;
-    float _spaceQTETimer;
+    GameObject _targetZombie;
 
-    string[] _qteSequences = { "Q", "QE", "QWE", "QWEASD", "QWEASDZXC", "QWERASDFZXCV" };
-    int _currentStage = 0;
-    
+    // Getter 함수
+    public bool IsQTEActive() => _isQTEActive;
 
-    public bool IsQTEActive()
+
+    private void Awake()
     {
-        return _isQTEActive;
+        Instance = this;
     }
 
-    public int GetCurrentStage()
+    private void Start()
     {
-        return _currentStage;
-    }
-
-    public void StartQTEForStage(int stage)
-    {
-        _currentStage = Mathf.Min(stage, _qteSequences.Length - 1);
-        string keypool = _qteSequences[_currentStage];
-        char randomKey = keypool[Random.Range(0, keypool.Length)];
-        StartQTE(randomKey.ToString());
-    }
-
-    public void StartQTE(string keys)
-    {
-        _requiredKeys.Clear();
-        foreach (char key in keys)
-        {
-            _requiredKeys.Add(keys.ToString().ToLower());
-        }
-
-        _currentKeyIndex = 0;
-        _isQTEActive = true;
-        _qteTimer = QTETime;
-        QTEUI.SetActive(true);
-        UpdateQTEText();
+        QTEUI.SetActive(false);
     }
 
     private void Update()
     {
-        if (_isQTEActive)
-        {
-            _qteTimer -= Time.deltaTime;
-            if (_qteTimer <= 0)
-            {
-                EndQTE(false);
-            }
+        if (!_isQTEActive) return;
 
-            if (_isSpacebarQTE)
+        _qteTimer -= Time.deltaTime;
+        if (_qteTimer <= 0)
+        {
+            EndQTE(false);
+        }
+
+        if (Input.anyKeyDown)
+        {
+            // 추후 여러 키 받을때를 대비해서, lower case로 변환하는 작업 유지
+            string inputKey = (KeyCode.Q).ToString().ToLower();
+            if (Input.GetKeyDown(KeyCode.Q))
             {
-                float elapsed = Time.time - _spaceQTETimer;
-                if (elapsed > SpaceQTETime)
-                {
-                    EndQTE(false);
-                }
-                if (Input.GetKeyDown("space"))
-                {
-                    EndQTE(true);
-                }
+                // 이부분에서 정확한 키 받았는지 검사. 정확한 키라면 성공으로 QTE 종료
+                EndQTE(true);
             }
             else
             {
-                if (Input.anyKeyDown)
-                {
-                    foreach (KeyCode keyCode in System.Enum.GetValues(typeof(KeyCode)))
-                    {
-                        if (Input.GetKeyDown(keyCode))
-                        {
-                            string inputKey = keyCode.ToString().ToLower();
-                            if (inputKey == _requiredKeys[_currentKeyIndex])
-                            {
-                                _currentKeyIndex++;
-                                if (_currentKeyIndex >= _requiredKeys.Count)
-                                {
-                                    StartSpacebarQTE();
-                                }
-                                else
-                                {
-                                    UpdateQTEText();
-                                }
-                            }
-                            else
-                            {
-                                EndQTE(false);
-                            }
-                            break;
-                        }
-                    }
-                }
+                // 잘못된 키라면 실패로 종료
+                EndQTE(false);
             }
         }
     }
 
-    private void StartSpacebarQTE()
-    {
-        _isSpacebarQTE = true;
-        _qteTimer = SpaceQTETime;
-        _spaceQTETimer = Time.time;
-        QTEText.text = "Press Space";
-    }
 
+    public void StartQTE(GameObject targetZombie)
+    {
+        // 불릿타임 시작
+        Time.timeScale = 0.2f;
+
+        _targetZombie = targetZombie;
+        _isQTEActive = true;
+        _qteTimer = QTETime;
+        UpdateQTEText();
+        QTEUI.SetActive(true);
+    }
     private void UpdateQTEText()
     {
-        QTEText.text = "Press " + _requiredKeys[_currentKeyIndex];
+        QTEText.text = "Press " + _requiredKey;
     }
 
     private void EndQTE(bool success)
     {
         _isQTEActive = false;
-        _isSpacebarQTE = false;
         QTEUI.SetActive(false);
-        if (success)
-        {
-            KnockbackZombies();
-            //Shelter shelter = FindFirstObjectByType<Shelter>();
-            //shelter.OnQTESuccess();
-            _currentStage++;
-        }
-    }
 
-    private void KnockbackZombies()
-    {
-        GameObject[] zombies = GameObject.FindGameObjectsWithTag("Zombie");
-        foreach (GameObject zombie in zombies)
+        if (success && _targetZombie != null)
         {
-            Vector3 direction = (zombie.transform.position - _player.transform.position).normalized;
-            zombie.transform.position += direction * 5f;
+            Zombie zombieScript = _targetZombie.GetComponent<Zombie>();
+            zombieScript.Die();
+            _targetZombie = null;
         }
+
+        // 불릿타임 종료
+        Time.timeScale = 1f;
     }
 }

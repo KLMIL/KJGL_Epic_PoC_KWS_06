@@ -7,7 +7,7 @@ public class GameManager : MonoBehaviour
         if (GameObject.FindGameObjectsWithTag("Zombie").Length == 0)
         {
             Debug.Log("Stage Clear");
-            Time.timeScale = 0f;
+            //Time.timeScale = 0f;
         }
     }
 }

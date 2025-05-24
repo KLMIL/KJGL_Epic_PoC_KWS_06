@@ -3,7 +3,7 @@
 public class Shelter : MonoBehaviour
 {
     public GameObject Door;
-    public QTESystem qteSystem;
+    //public QTESystem qteSystem;
     bool _isPlayerInTrigger = false;
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -11,7 +11,7 @@ public class Shelter : MonoBehaviour
         if (collision.CompareTag("Player"))
         {
             _isPlayerInTrigger = true;
-            qteSystem.StartQTE("q");
+            //qteSystem.StartQTE("q");
         }
     }
 

@@ -49,8 +49,7 @@ public class Gun : MonoBehaviour
 
     public void Reload()
     {
-        // 로직 잘못됐는데?
-        //CurrentAmmo = Mathf.Min(CurrentAmmo + (MaxAmmo - CurrentAmmo), 12);
+        // 무조건 탄창 버리고 새로 장전하는 방식
         if (MaxAmmo >= 12)
         {
             CurrentAmmo = 12;
