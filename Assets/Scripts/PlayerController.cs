@@ -1,6 +1,7 @@
 ﻿using NUnit.Framework;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class PlayerController : MonoBehaviour
 {
@@ -9,6 +10,9 @@ public class PlayerController : MonoBehaviour
 
     Rigidbody2D _rb;
     float _moveSpeed = 5f;
+    Vector2 _targetPosition;
+    bool _isMoving = false;
+    float _moveThreshold = 0.1f;
 
     
     [SerializeField] List<GameObject> _nearZombies = new List<GameObject>(); // QTE 사거리 내 좀비
@@ -24,6 +28,7 @@ public class PlayerController : MonoBehaviour
     {
         _rb = GetComponent<Rigidbody2D>();
         _qteSystem = QTESystem.Instance;
+        _targetPosition = transform.position;
     }
 
     private void OnDestroy()
@@ -36,11 +41,43 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        // A, D로 플레이어 이동
-        float moveInput = 0f;
-        if (Input.GetKey(KeyCode.A)) moveInput = -1f;
-        if (Input.GetKey(KeyCode.D)) moveInput = 1f;
-        _rb.linearVelocity = new Vector2(moveInput * _moveSpeed, _rb.linearVelocity.y);
+        // 플레이어 이동
+        //Vector2 input = new Vector2(
+        //        Input.GetAxisRaw("Horizontal"),
+        //        Input.GetAxisRaw("Vertical")
+        //    );
+        //Vector2 moveDirection = input.normalized;
+        //transform.position += (Vector3)(moveDirection * _moveSpeed * Time.deltaTime);
+
+        // 마우스로 플레이어 이동
+        if (Input.GetMouseButtonDown(1)) {
+            _targetPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            _isMoving = true;
+        }
+
+        if (_isMoving)
+        {
+            Vector2 currentPosition = transform.position;
+            float distance = Vector2.Distance(currentPosition, _targetPosition);
+            if (distance > _moveThreshold)
+            {
+                Vector2 moveDirection = (_targetPosition - currentPosition).normalized;
+                transform.position += (Vector3)(moveDirection * _moveSpeed * Time.deltaTime);
+            }
+            else
+            {
+                _isMoving = false;
+            }
+        }
+
+
+        // 마우스 방향으로 회전
+        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        mousePos.z = 0;
+        Vector3 lookDirection = (mousePos - transform.position).normalized;
+        float angle = Mathf.Atan2(lookDirection.y, lookDirection.x) * Mathf.Rad2Deg;
+        transform.rotation = Quaternion.Euler(0, 0, angle);
+
 
         // QTE 트리거 : 근처 stun 좀비가 있고, QTE 비활성화 상태
         if (_stunnedZombies.Count > 0 && !_qteSystem.IsQTEActive())
