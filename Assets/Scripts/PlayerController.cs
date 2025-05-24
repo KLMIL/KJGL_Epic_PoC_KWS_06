@@ -1,7 +1,5 @@
-﻿using NUnit.Framework;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 public class PlayerController : MonoBehaviour
 {
@@ -90,8 +88,8 @@ public class PlayerController : MonoBehaviour
             //    _qteSystem.ShowQTEStartText();
             //}
 
-            if (Input.GetKeyDown(KeyCode.E)) 
-            {
+            //if (Input.GetKeyDown(KeyCode.E)) 
+            //{
                 GameObject closestZombie = null;
                 float minDistance = float.MaxValue;
                 foreach (var zombie in _stunnedZombies)
@@ -104,7 +102,7 @@ public class PlayerController : MonoBehaviour
                     }
                 }
                 _qteSystem.StartQTE(closestZombie);
-            }
+            //}
         }
         else
         {
