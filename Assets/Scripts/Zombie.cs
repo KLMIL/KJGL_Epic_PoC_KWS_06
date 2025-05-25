@@ -14,6 +14,7 @@ public class Zombie : MonoBehaviour
 
     public bool IsStunned() => _isStunned;
     public event Action<GameObject, bool> OnStunned; // 무력화 이벤트
+    public event Action<Zombie> OnDestroyed;
 
     SpriteRenderer _spriteRenderer;
 
@@ -21,6 +22,12 @@ public class Zombie : MonoBehaviour
     {
         _playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
         _spriteRenderer = GetComponent<SpriteRenderer>();
+    }
+
+    private void OnDestroy()
+    {
+        // 이벤트 구독자 모두 제거 알림
+        OnDestroyed?.Invoke(this);
     }
 
     private void Update()

@@ -3,18 +3,22 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    public Gun Gun;
-    QTESystem _qteSystem;
+    [SerializeField] Gun Gun;
+    [SerializeField] QTESystem _qteSystem;
 
-    Rigidbody2D _rb;
-    float _moveSpeed = 5f;
+    //Rigidbody2D _rb;
+    [Header("Player Ststus")]
+    [SerializeField] float _moveSpeed = 5f;
+
+    // Mouse Move Status
     Vector2 _targetPosition;
     bool _isMoving = false;
     float _moveThreshold = 0.1f;
 
+    // QTE Field
     bool _isQTEButtonShow = false;
 
-    
+    // Enemy Field
     [SerializeField] List<GameObject> _nearZombies = new List<GameObject>(); // QTE 사거리 내 좀비
     [SerializeField] List<GameObject> _stunnedZombies = new List<GameObject>(); // 무력화 좀비
     [SerializeField] HashSet<Zombie> _subscribedZombies = new HashSet<Zombie>(); // 구독 추적
@@ -26,13 +30,16 @@ public class PlayerController : MonoBehaviour
 
     private void Start()
     {
-        _rb = GetComponent<Rigidbody2D>();
-        _qteSystem = QTESystem.Instance;
+        //_rb = GetComponent<Rigidbody2D>();
+        //_qteSystem = QTESystem.Instance; // Inspector에서 할당
+
+        // 마우스 이동을 위한 현재 위치 갱신
         _targetPosition = transform.position;
     }
 
     private void OnDestroy()
     {
+        // 이벤트 구독 해제
         foreach (var zombie in _subscribedZombies)
         {
             if (zombie != null) zombie.OnStunned -= HandleZombieStunned;
@@ -42,33 +49,33 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         // 플레이어 이동
-        //Vector2 input = new Vector2(
-        //        Input.GetAxisRaw("Horizontal"),
-        //        Input.GetAxisRaw("Vertical")
-        //    );
-        //Vector2 moveDirection = input.normalized;
-        //transform.position += (Vector3)(moveDirection * _moveSpeed * Time.deltaTime);
+        Vector2 input = new Vector2(
+                Input.GetAxisRaw("Horizontal"),
+                Input.GetAxisRaw("Vertical")
+            );
+        Vector2 moveDirection = input.normalized;
+        transform.position += (Vector3)(moveDirection * _moveSpeed * Time.deltaTime);
 
         // 마우스로 플레이어 이동
-        if (Input.GetMouseButtonDown(1)) {
-            _targetPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            _isMoving = true;
-        }
+        //if (Input.GetMouseButtonDown(1)) {
+        //    _targetPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        //    _isMoving = true;
+        //}
 
-        if (_isMoving)
-        {
-            Vector2 currentPosition = transform.position;
-            float distance = Vector2.Distance(currentPosition, _targetPosition);
-            if (distance > _moveThreshold)
-            {
-                Vector2 moveDirection = (_targetPosition - currentPosition).normalized;
-                transform.position += (Vector3)(moveDirection * _moveSpeed * Time.deltaTime);
-            }
-            else
-            {
-                _isMoving = false;
-            }
-        }
+        //if (_isMoving)
+        //{
+        //    Vector2 currentPosition = transform.position;
+        //    float distance = Vector2.Distance(currentPosition, _targetPosition);
+        //    if (distance > _moveThreshold)
+        //    {
+        //        Vector2 moveDirection = (_targetPosition - currentPosition).normalized;
+        //        transform.position += (Vector3)(moveDirection * _moveSpeed * Time.deltaTime);
+        //    }
+        //    else
+        //    {
+        //        _isMoving = false;
+        //    }
+        //}
 
 
         // 마우스 방향으로 회전
@@ -153,7 +160,18 @@ public class PlayerController : MonoBehaviour
         if (zombie != null && !_subscribedZombies.Contains(zombie))
         {
             zombie.OnStunned += HandleZombieStunned;
+            zombie.OnDestroyed += UnsubscribeFromZombie;
             _subscribedZombies.Add(zombie);
+        }
+    }
+
+    private void UnsubscribeFromZombie(Zombie zombie)
+    {
+        if (zombie != null)
+        {
+            zombie.OnStunned -= HandleZombieStunned;
+            zombie.OnDestroyed -= UnsubscribeFromZombie;
+            _subscribedZombies.Remove(zombie);
         }
     }
 
