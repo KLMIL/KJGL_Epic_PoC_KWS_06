@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿using NUnit.Framework;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class QTESystem : MonoBehaviour
@@ -15,11 +18,16 @@ public class QTESystem : MonoBehaviour
     [Header("QTE Status")]
     public float QteTime = 2f;
     public string RequiredKey = "q";
+    public string RequiredKeys = "";
+    int _keyIndex = 0;
+
+    char[] _keyPool = { 'Q', 'W', 'E', 'A', 'S', 'D' };
 
     // 내부 QTE 진행상태용 변수
     bool _isQteActive = false;
     //float _qteTimer; // 당장엔 QTE 삭제
     GameObject _targetZombie;
+    List<GameObject> _targetZombies = new List<GameObject>();
 
     // Getter 함수
     public bool IsQteActive() => _isQteActive;
@@ -49,27 +57,52 @@ public class QTESystem : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.F)) return;
 
-            // 추후 여러 키 받을때를 대비해서, lower case로 변환하는 작업 유지
-            string inputKey = (KeyCode.Q).ToString().ToLower();
-            if (Input.GetKeyDown(KeyCode.Q))
+            // 이번에 입력받아야 하는 키
+            KeyCode expectedKey = (KeyCode)RequiredKeys[_keyIndex];
+
+            if (Input.GetKeyDown(expectedKey))
             {
-                // 이부분에서 정확한 키 받았는지 검사. 정확한 키라면 성공으로 QTE 종료
-                EndQte(true);
+                // 정확한 키라면 index++ 후 다음 입력 대기
+                _keyIndex++;
+
+                // index가 요구 키 갯수와 같다면 성공으로 종료 -> EndQte(true)
+                if (_keyIndex >= RequiredKeys.Length)
+                {
+                    EndQte(true);
+                }
+                return;
+
             }
-            else
-            {
-                // 잘못된 키라면 실패로 종료
-                EndQte(false);
-            }
+            // 잘못된 키를 입력했다면 실패로 동료 -> EndQte(false)
+            EndQte(false);
         }
     }
 
-    private void UpdateQteText()
+    private void DEP_UpdateQteText()
     {
         QteText.text = "Press " + RequiredKey.ToUpper();
     }
 
-    public void StartQte(GameObject targetZombie)
+    private void UpdateQteText(int len)
+    {
+        RequiredKeys = "";
+
+        for (int i = 0; i < len; i++)
+        {
+            char randomKey = _keyPool[Random.Range(0, _keyPool.Length)];
+            RequiredKeys += randomKey;
+        }
+
+        QteText.text = "Press ";
+        for (int i = 0; i < len; i++)
+        {
+            QteText.text += $" {RequiredKeys[i]}";
+        }
+
+        Debug.Log($"{RequiredKeys}");
+    }
+
+    public void DEP_StartQte(GameObject targetZombie)
     {
         // 불릿타임 시작
         Time.timeScale = 0.2f;
@@ -77,7 +110,18 @@ public class QTESystem : MonoBehaviour
         _targetZombie = targetZombie;
         _isQteActive = true;
         //_qteTimer = QTETime;
-        UpdateQteText();
+        DEP_UpdateQteText();
+        QteUi.SetActive(true);
+    }
+
+    public void StartQte(List<GameObject> targetZombies)
+    {
+        // 불릿타임 시작
+        Time.timeScale = 0.2f;
+
+        _targetZombies = targetZombies;
+        _isQteActive = true;
+        UpdateQteText(_targetZombies.Count);
         QteUi.SetActive(true);
     }
 

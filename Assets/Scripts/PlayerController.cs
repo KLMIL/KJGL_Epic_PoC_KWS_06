@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -11,12 +12,14 @@ public class PlayerController : MonoBehaviour
 
     // QTE Field
     bool _isQTEButtonNotifierShow = false;
+    [SerializeField] int _nearQteTargetNum = 3;
 
     // Enemy Field
     [SerializeField] List<GameObject> _nearZombies = new List<GameObject>(); // QTE 사거리 내 좀비
     [SerializeField] List<GameObject> _stunnedZombies = new List<GameObject>(); // 무력화 좀비
     [SerializeField] HashSet<Zombie> _subscribedZombies = new HashSet<Zombie>(); // 좀비 상태 이벤트 구독
 
+    
 
     private void OnDestroy()
     {
@@ -62,18 +65,28 @@ public class PlayerController : MonoBehaviour
                 _isQTEButtonNotifierShow = false;
                 _qteSystem.HideQteNotifier();
 
-                GameObject closestZombie = null;
-                float minDistance = float.MaxValue;
-                foreach (var zombie in _stunnedZombies)
-                {
-                    float distance = Vector3.Distance(transform.position, zombie.transform.position);
-                    if (distance < minDistance)
-                    {
-                        minDistance = distance;
-                        closestZombie = zombie;
-                    }
-                }
-                _qteSystem.StartQte(closestZombie);
+
+                // 가까운 _nearQteTargetNum 오브젝트 리스트 전달
+                List<GameObject> nearest = _nearZombies
+                    .OrderBy(t => Vector3.SqrMagnitude(t.transform.position - transform.position))
+                    .Take(_nearQteTargetNum < _nearZombies.Count ? _nearQteTargetNum : _nearZombies.Count)
+                    .ToList();
+            
+                _qteSystem.StartQte(nearest);
+
+                // 단일 개체 QTE
+                //GameObject closestZombie = null;
+                //float minDistance = float.MaxValue;
+                //foreach (var zombie in _stunnedZombies)
+                //{
+                //    float distance = Vector3.Distance(transform.position, zombie.transform.position);
+                //    if (distance < minDistance)
+                //    {
+                //        minDistance = distance;
+                //        closestZombie = zombie;
+                //    }
+                //}
+                //_qteSystem.StartQte(closestZombie);
             }
         }
         else
