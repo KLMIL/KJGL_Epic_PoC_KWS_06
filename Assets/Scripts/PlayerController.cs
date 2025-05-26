@@ -6,36 +6,17 @@ public class PlayerController : MonoBehaviour
     [SerializeField] Gun Gun;
     [SerializeField] QTESystem _qteSystem;
 
-    //Rigidbody2D _rb;
     [Header("Player Ststus")]
     [SerializeField] float _moveSpeed = 5f;
 
-    // Mouse Move Status
-    Vector2 _targetPosition;
-    bool _isMoving = false;
-    float _moveThreshold = 0.1f;
-
     // QTE Field
-    bool _isQTEButtonShow = false;
+    bool _isQTEButtonNotifierShow = false;
 
     // Enemy Field
     [SerializeField] List<GameObject> _nearZombies = new List<GameObject>(); // QTE 사거리 내 좀비
     [SerializeField] List<GameObject> _stunnedZombies = new List<GameObject>(); // 무력화 좀비
-    [SerializeField] HashSet<Zombie> _subscribedZombies = new HashSet<Zombie>(); // 구독 추적
+    [SerializeField] HashSet<Zombie> _subscribedZombies = new HashSet<Zombie>(); // 좀비 상태 이벤트 구독
 
-
-    // Get 함수
-    //public List<GameObject> GetNearZombies() => _nearZombies;
-
-
-    private void Start()
-    {
-        //_rb = GetComponent<Rigidbody2D>();
-        //_qteSystem = QTESystem.Instance; // Inspector에서 할당
-
-        // 마우스 이동을 위한 현재 위치 갱신
-        _targetPosition = transform.position;
-    }
 
     private void OnDestroy()
     {
@@ -56,47 +37,31 @@ public class PlayerController : MonoBehaviour
         Vector2 moveDirection = input.normalized;
         transform.position += (Vector3)(moveDirection * _moveSpeed * Time.deltaTime);
 
-        // 마우스로 플레이어 이동
-        //if (Input.GetMouseButtonDown(1)) {
-        //    _targetPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        //    _isMoving = true;
-        //}
-
-        //if (_isMoving)
-        //{
-        //    Vector2 currentPosition = transform.position;
-        //    float distance = Vector2.Distance(currentPosition, _targetPosition);
-        //    if (distance > _moveThreshold)
-        //    {
-        //        Vector2 moveDirection = (_targetPosition - currentPosition).normalized;
-        //        transform.position += (Vector3)(moveDirection * _moveSpeed * Time.deltaTime);
-        //    }
-        //    else
-        //    {
-        //        _isMoving = false;
-        //    }
-        //}
-
 
         // 마우스 방향으로 회전
-        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        mousePos.z = 0;
+        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition); mousePos.z = 0;
         Vector3 lookDirection = (mousePos - transform.position).normalized;
         float angle = Mathf.Atan2(lookDirection.y, lookDirection.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0, 0, angle);
 
 
         // QTE 트리거 : 근처 stun 좀비가 있고, QTE 비활성화 상태
-        if (_stunnedZombies.Count > 0 && !_qteSystem.IsQTEActive())
+        if (_stunnedZombies.Count > 0 && !_qteSystem.IsQteActive())
         {
-            // 임시 QTE 키 노출 함수. 추후 구조조정바람
-            //if (!_isQTEButtonShow)
-            //{
-            //    _qteSystem.ShowQTEStartText();
-            //}
+            // QTE가 가능한 상태면 "F"키 노출
+            if (!_isQTEButtonNotifierShow)
+            {
+                _isQTEButtonNotifierShow = true;
+                _qteSystem.ShowQteNotifier();
+            }
 
-            //if (Input.GetKeyDown(KeyCode.E)) 
-            //{
+            // F키 눌리면 StartQTE 호출
+            if (Input.GetKeyDown(KeyCode.F))
+            {
+                // F키 노출 제거
+                _isQTEButtonNotifierShow = false;
+                _qteSystem.HideQteNotifier();
+
                 GameObject closestZombie = null;
                 float minDistance = float.MaxValue;
                 foreach (var zombie in _stunnedZombies)
@@ -108,13 +73,14 @@ public class PlayerController : MonoBehaviour
                         closestZombie = zombie;
                     }
                 }
-                _qteSystem.StartQTE(closestZombie);
-            //}
+                _qteSystem.StartQte(closestZombie);
+            }
         }
         else
         {
-            // 임시 QTE 키 노출 제거 함수. 추후 구조조정바람
-            //_qteSystem.NoShowQTEStartText();
+            // F키 노출 제거
+            _isQTEButtonNotifierShow = false;
+            _qteSystem.HideQteNotifier();
         }
     }
 
